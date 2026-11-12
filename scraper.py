@@ -40,6 +40,7 @@ class Product:
     title: str | None
     status: str
     price_clp: int | None
+    product: str = "consola"
 
     def snapshot(self) -> dict[str, Any]:
         return {
@@ -48,6 +49,56 @@ class Product:
             "status": self.status,
             "price_clp": self.price_clp,
         }
+
+# Productos vigilados. Cada uno genera su propio aviso (Issue) en GitHub.
+PRODUCTS: dict[str, dict[str, Any]] = {
+    "consola": {
+        "label": "Consola Switch 2 Zelda 40th",
+        "min_price": 450_000,
+        "max_price": 2_000_000,
+    },
+    "control": {
+        "label": "Pro Controller Zelda 40th + base",
+        "min_price": 60_000,
+        "max_price": 450_000,
+    },
+}
+
+CONTROLLER_WORDS = ("pro controller", "control pro", "controller", "mando", "control inal", "control nintendo")
+STAND_WORDS = ("stand", "base", "soporte", "display", "exhib", "expositor")
+OTHER_ACCESSORY_WORDS = (
+    "funda", "estuche", "carrying case", "protector", "amiibo", "ocarina of time",
+    "juego", "joy-con 2 (par)", "par de joy-con",
+)
+
+def _norm(text: str) -> str:
+    return " ".join((text or "").lower().split())
+
+def is_zelda40(text: str) -> bool:
+    low = _norm(text)
+    if not all(t in low for t in ("switch", "zelda", "40")):
+        return False
+    return any(t in low for t in (
+        "40th", "40.º", "40º", "40°", "40 aniversario", "40 anniversary",
+        "edición 40", "edicion 40", "40 años", "40 anos",
+    ))
+
+def classify(title: str, extra: str = "") -> str | None:
+    """Clasifica una ficha por su TÍTULO: 'consola', 'control' (con base) o None.
+
+    Solo se mira el título para decidir el tipo, porque la descripción de una consola
+    menciona Joy-Con, base, etc. 'extra' (texto de la página) solo se usa para confirmar
+    que el control incluye la base de exhibición cuando el título no lo dice.
+    """
+    t = _norm(title)
+    if not is_zelda40(t):
+        return None
+    if any(w in t for w in CONTROLLER_WORDS):
+        corpus = t + " " + _norm(extra)[:20_000]
+        return "control" if any(w in corpus for w in STAND_WORDS) else None
+    if any(w in t for w in OTHER_ACCESSORY_WORDS):
+        return None
+    return "consola"
 
 def make_session() -> requests.Session:
     s = requests.Session()
@@ -65,7 +116,7 @@ def make_session() -> requests.Session:
     })
     return s
 
-def money(value: Any) -> int | None:
+def money(value: Any, product: str = "consola") -> int | None:
     if value is None:
         return None
     s = str(value).strip().replace("CLP", "").replace("$", "").replace(" ", "")
@@ -77,9 +128,10 @@ def money(value: Any) -> int | None:
     if not digits:
         return None
     n = int(digits)
-    # Esta edición de consola se mueve muy por encima de accesorios/juegos.
-    # El piso evita tomar cuotas y productos relacionados como si fueran el precio de la consola.
-    return n if 500_000 <= n <= 2_000_000 else None
+    # Rango de precio propio de cada producto: evita tomar cuotas, juegos o
+    # accesorios relacionados como si fueran el precio del producto vigilado.
+    prof = PRODUCTS.get(product, PRODUCTS["consola"])
+    return n if prof["min_price"] <= n <= prof["max_price"] else None
 
 def walk(value: Any):
     if isinstance(value, dict):
@@ -90,14 +142,14 @@ def walk(value: Any):
         for v in value:
             yield from walk(v)
 
-def jsonld_product(soup: BeautifulSoup) -> tuple[int | None, str | None, str | None]:
-    """Toma solo el Product JSON-LD que realmente corresponde a la consola Zelda 40th.
+def jsonld_product(soup: BeautifulSoup, product: str = "consola") -> tuple[int | None, str | None, str | None]:
+    """Toma solo el Product JSON-LD que realmente corresponde al producto vigilado.
 
     Varias tiendas incluyen carruseles completos como Product JSON-LD; recorrerlos sin filtrar
     hacía que termináramos leyendo el precio de un juego o accesorio relacionado.
     """
     candidates: list[tuple[int, dict[str, Any]]] = []
-    for tag in soup.find_all("script", attrs={"type": re.compile(r"ld\\+json", re.I)}):
+    for tag in soup.find_all("script", attrs={"type": re.compile(r"ld\+json", re.I)}):
         raw = tag.string or tag.get_text(" ", strip=True)
         if not raw:
             continue
@@ -111,10 +163,15 @@ def jsonld_product(soup: BeautifulSoup) -> tuple[int | None, str | None, str | N
             if "Product" not in types:
                 continue
             product_name = str(obj.get("name") or "")
-            low = product_name.lower()
-            score = sum(token in low for token in ("switch", "zelda", "40"))
-            if score >= 3:
-                candidates.append((score, obj))
+            kind = classify(product_name, str(obj.get("description") or ""))
+            # Un control sin "base" en el nombre JSON-LD se acepta si la ficha
+            # fue configurada como control (la URL ya es la del control con base).
+            if kind is None and product == "control":
+                low = _norm(product_name)
+                if is_zelda40(low) and any(w in low for w in CONTROLLER_WORDS):
+                    kind = "control"
+            if kind == product:
+                candidates.append((3, obj))
 
     if not candidates:
         return None, None, None
@@ -129,17 +186,17 @@ def jsonld_product(soup: BeautifulSoup) -> tuple[int | None, str | None, str | N
         if not isinstance(offer, dict):
             continue
         currency = str(offer.get("priceCurrency", "")).upper()
-        p = money(offer.get("price"))
+        p = money(offer.get("price"), product)
         if p and (not currency or currency == "CLP"):
             prices.append(p)
         if offer.get("availability"):
             availability = str(offer["availability"])
     return (min(prices) if prices else None), availability, product_name
 
-def fallback_price(text: str) -> int | None:
+def fallback_price(text: str, product: str = "consola") -> int | None:
     values = []
-    for m in re.finditer(r"\$\s*([0-9]{1,3}(?:[.\s][0-9]{3})+|[0-9]{6,7})", text):
-        n = money(m.group(1))
+    for m in re.finditer(r"\$\s*([0-9]{1,3}(?:[.\s][0-9]{3})+|[0-9]{5,7})", text):
+        n = money(m.group(1), product)
         if n:
             values.append(n)
     return min(values) if values else None
@@ -179,14 +236,14 @@ def get_limited(s: requests.Session, url: str) -> requests.Response:
     r._content_consumed = True
     return r
 
-def inspect(s: requests.Session, name: str, url: str) -> Product:
+def inspect(s: requests.Session, name: str, url: str, product: str = "consola") -> Product:
     try:
         r = get_limited(s, url)
         if r.status_code == 404:
-            return Product(name, url, 404, None, "page_missing", None)
+            return Product(name, url, 404, None, "page_missing", None, product)
         if r.status_code in (403, 429) or r.status_code >= 500:
             # 403 suele ser Cloudflare/anti-bot; no lo convertimos en cambio de stock.
-            return Product(name, url, r.status_code, None, "error", None)
+            return Product(name, url, r.status_code, None, "error", None, product)
         soup = BeautifulSoup(r.text, "html.parser")
         text = soup.get_text(" ", strip=True)
         page_title = soup.title.get_text(" ", strip=True) if soup.title else ""
@@ -197,9 +254,9 @@ def inspect(s: requests.Session, name: str, url: str) -> Product:
             "enable javascript and cookies", "attention required",
         )
         if any(marker in challenge for marker in challenge_markers):
-            return Product(name, url, r.status_code, page_title or None, "error", None)
+            return Product(name, url, r.status_code, page_title or None, "error", None, product)
 
-        price_json, availability, product_name = jsonld_product(soup)
+        price_json, availability, product_name = jsonld_product(soup, product)
         title = product_name or (page_title or None)
 
         # TodoJuegos declara explícitamente "Precio x Confirmar"; no inferimos un precio
@@ -209,7 +266,7 @@ def inspect(s: requests.Session, name: str, url: str) -> Product:
         if "todojuegos.cl" in host and "precio x confirmar" in low:
             parsed_price = None
         else:
-            parsed_price = price_json or fallback_price(text)
+            parsed_price = price_json or fallback_price(text, product)
 
         parsed_status = status_from(text, availability, r.status_code)
 
@@ -231,9 +288,10 @@ def inspect(s: requests.Session, name: str, url: str) -> Product:
             title=title,
             status=parsed_status,
             price_clp=parsed_price,
+            product=product,
         )
     except requests.RequestException:
-        return Product(name, url, None, None, "error", None)
+        return Product(name, url, None, None, "error", None, product)
 
 def bing_rss(s: requests.Session, query: str) -> list[tuple[str, str]]:
     url = "https://www.bing.com/search?" + urllib.parse.urlencode({
@@ -257,14 +315,8 @@ def bing_rss(s: requests.Session, query: str) -> list[tuple[str, str]]:
 ML_NINTENDO_STORE = "https://www.mercadolibre.cl/tienda/nintendo"
 
 def ml_target_title(text: str) -> bool:
-    low = " ".join(text.lower().split())
-    has_core = all(token in low for token in ("switch", "zelda", "40"))
-    has_anniversary = any(token in low for token in (
-        "40th", "40.º", "40º", "40°", "40 aniversario", "40th anniversary",
-        "edición 40", "edicion 40",
-    ))
     # El 40.º aniversario es el filtro decisivo: evita confundir juegos Zelda de Switch 2.
-    return has_core and has_anniversary
+    return is_zelda40(text)
 
 def canonical_ml_url(url: str) -> str:
     parsed = urllib.parse.urlparse(url)
@@ -313,14 +365,15 @@ def discover_mercadolibre_official(
                     if img:
                         parts.append(str(img.get("alt") or ""))
                     candidate_title = " ".join(x for x in parts if x).strip()
-                    if not ml_target_title(candidate_title):
+                    kind = classify(candidate_title)
+                    if kind is None:
                         continue
                     url = canonical_ml_url(urllib.parse.urljoin(ML_NINTENDO_STORE, a["href"]))
                     host = urllib.parse.urlparse(url).netloc.lower()
                     if "mercadolibre.cl" not in host or url in seen:
                         continue
                     seen.add(url)
-                    current = inspect(s, "Mercado Libre · Nintendo Oficial", url)
+                    current = inspect(s, "Mercado Libre · Nintendo Oficial", url, kind)
                     if current.status not in ("error", "unknown"):
                         found.append(current)
     except requests.RequestException:
@@ -330,6 +383,7 @@ def discover_mercadolibre_official(
     queries = [
         'site:mercadolibre.cl "Nintendo Switch 2" "Zelda" "40th" "Tienda oficial"',
         'site:mercadolibre.cl "Consola Nintendo Switch 2" "Zelda" "40" "aniversario"',
+        'site:mercadolibre.cl "Pro Controller" "Zelda" "40" "Switch 2"',
     ]
     for query in queries:
         for result_title, url in bing_rss(s, query):
@@ -347,12 +401,13 @@ def discover_mercadolibre_official(
                 body = soup.get_text(" ", strip=True)[:120_000]
                 title = soup.title.get_text(" ", strip=True) if soup.title else result_title
                 corpus = f"{title} {body}"
-                if not ml_target_title(corpus):
+                kind = classify(title, body)
+                if kind is None:
                     continue
                 if not ml_is_official_nintendo(corpus):
                     continue
                 seen.add(url)
-                current = inspect(s, "Mercado Libre · Nintendo Oficial", url)
+                current = inspect(s, "Mercado Libre · Nintendo Oficial", url, kind)
                 if current.status not in ("error", "unknown"):
                     found.append(current)
             except requests.RequestException:
@@ -366,6 +421,8 @@ def discover(s: requests.Session, known_urls: set[str]) -> list[Product]:
         '"Nintendo Switch 2" "Zelda" "40th" Chile',
         '"Switch 2" "Zelda" "40" "preventa" Chile',
         '"Consola Switch 2 Zelda 40" Chile',
+        '"Pro Controller" "Zelda" "40" stand Chile',
+        '"Pro Controller" "Zelda" "40" "base" Chile',
     ]
     found: list[Product] = []
     seen = set(known_urls)
@@ -389,11 +446,12 @@ def discover(s: requests.Session, known_urls: set[str]) -> list[Product]:
                 body = soup.get_text(" ", strip=True)[:120_000].lower()
                 title = (soup.title.get_text(" ", strip=True) if soup.title else result_title).lower()
                 corpus = title + " " + body
-                if not all(x in corpus for x in ("switch", "zelda", "40")):
+                kind = classify(title, body)
+                if kind is None:
                     continue
                 if not any(x in corpus for x in ("precio", "stock", "preventa", "comprar", "carrito", "producto")):
                     continue
-                found.append(inspect(s, host, url))
+                found.append(inspect(s, host, url, kind))
             except requests.RequestException:
                 pass
             time.sleep(0.25)

@@ -1,34 +1,72 @@
 [
   {
     "name": "Bestmart",
-    "url": "https://bestmart.cl/products/consola-nintendo-switch-2-the-legend-of-zelda-edicion-40-aniversario"
+    "url": "https://bestmart.cl/products/consola-nintendo-switch-2-the-legend-of-zelda-edicion-40-aniversario",
+    "product": "consola"
   },
   {
     "name": "Santo Games",
-    "url": "https://www.santogames.cl/nintendo-switch-2-the-legend-of-zelda-40%C2%BA-aniversario"
+    "url": "https://www.santogames.cl/nintendo-switch-2-the-legend-of-zelda-40%C2%BA-aniversario",
+    "product": "consola"
   },
   {
     "name": "Play Service",
-    "url": "https://playservice.cl/producto/preventa-consola-nintendo-switch-2-the-legend-of-zelda-40th-anniversary/"
+    "url": "https://playservice.cl/producto/preventa-consola-nintendo-switch-2-the-legend-of-zelda-40th-anniversary/",
+    "product": "consola"
   },
   {
     "name": "Mathogames",
-    "url": "https://www.mathogames.cl/consolas-switch-2/2538-consola-nintendo-switch-2-the-legend-of-zelda-40th-anniversary.html"
+    "url": "https://www.mathogames.cl/consolas-switch-2/2538-consola-nintendo-switch-2-the-legend-of-zelda-40th-anniversary.html",
+    "product": "consola"
   },
   {
     "name": "TodoJuegos",
-    "url": "https://www.todojuegos.cl/Productos/NS2/Consola-Switch-2-Zelda-40th-Aniversario/"
+    "url": "https://www.todojuegos.cl/Productos/NS2/Consola-Switch-2-Zelda-40th-Aniversario/",
+    "product": "consola"
   },
   {
     "name": "WePlay",
-    "url": "https://www.weplay.cl/consola-switch-2-the-legend-of-zelda-40th-aniversario.html"
+    "url": "https://www.weplay.cl/consola-switch-2-the-legend-of-zelda-40th-aniversario.html",
+    "product": "consola"
   },
   {
     "name": "Ripley",
-    "url": "https://simple.ripley.cl/consola-nintendo-switch-2-the-legend-of-zelda-40th-edicion-aniversario-2000413063768p"
+    "url": "https://simple.ripley.cl/consola-nintendo-switch-2-the-legend-of-zelda-40th-edicion-aniversario-2000413063768p",
+    "product": "consola"
   },
   {
     "name": "Mercado Libre (catálogo)",
-    "url": "https://www.mercadolibre.cl/p/MLC79375219"
+    "url": "https://www.mercadolibre.cl/p/MLC79375219",
+    "product": "consola"
+  },
+  {
+    "name": "WePlay",
+    "product": "control",
+    "url": "https://www.weplay.cl/pro-controller-nintendo-switch-2-the-legend-of-zelda-40th-aniversario.html"
+  },
+  {
+    "name": "Kaio Juegos",
+    "product": "control",
+    "url": "https://kaiojuegos.cl/accesorios/2649-pro-controller-stand-the-legend-of-zelda-40th-aniversario-switch-2.html"
+  },
+  {
+    "name": "Retroworld",
+    "product": "control",
+    "url": "https://www.retroworld.cl/nintendo-switch-2-pro-controller-base-de-exhibicion-the-legend-of-zelda-edicion-40-aniversario"
+  },
+  {
+    "name": "Santo Games",
+    "product": "control",
+    "url": "https://www.santogames.cl/en/nintendo-switch-2-pro-controller-zelda-40th-display-stand"
+  },
+  {
+    "name": "TodoJuegos",
+    "product": "control",
+    "url": "https://www.todojuegos.cl/Productos/NS2/Pro-Controller-Switch-2-Stand-Edicion-Zelda-40th-Aniversario/"
+  },
+  {
+    "name": "Mathogames",
+    "product": "control",
+    "url": "https://www.mathogames.cl/accesorios-switch-2/2565-pro-controller-nintendo-switch-2-stand-the-legend-of-zelda-40th-anniversary.html"
   }
 ]

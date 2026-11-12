@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from scraper import Product, discover, discover_mercadolibre_official, inspect, make_session
+from scraper import PRODUCTS, Product, discover, discover_mercadolibre_official, inspect, make_session
 
 def now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
@@ -42,14 +42,15 @@ def important_change(old: dict[str, Any], new: Product) -> bool:
     return False
 
 def describe(name: str, old: dict[str, Any] | None, new: Product, *, new_listing: bool = False) -> str:
+    what = PRODUCTS.get(new.product, {}).get("label", new.product)
     if new_listing:
-        head = f"### 🆕 Nueva publicación chilena: {name}"
+        head = f"### 🆕 Nueva publicación chilena: {name} · {what}"
     elif old and old.get("status") != "available" and new.status == "available":
-        head = f"### 🚨 STOCK / PREVENTA DISPONIBLE: {name}"
+        head = f"### 🚨 STOCK / PREVENTA DISPONIBLE: {name} · {what}"
     elif old and old.get("price_clp") and new.price_clp and old.get("price_clp") != new.price_clp:
-        head = f"### 💰 Cambio de precio: {name}"
+        head = f"### 💰 Cambio de precio: {name} · {what}"
     else:
-        head = f"### 🔔 Cambio detectado: {name}"
+        head = f"### 🔔 Cambio detectado: {name} · {what}"
 
     return (
         f"{head}\n\n"
@@ -77,21 +78,29 @@ def main() -> int:
     })
     state.setdefault("stores", {})
     state.setdefault("discovered", {})
-    initialized = bool(state.get("initialized"))
+    # Versión 3 = monitor consola + control. Un estado de versión anterior se trata
+    # como línea base nueva, para que la primera corrida no dispare avisos viejos.
+    initialized = bool(state.get("initialized")) and int(state.get("version") or 0) >= 3
     session = make_session()
-    alerts: list[str] = []
+    # Un listado de avisos por producto: cada uno termina en su propio Issue.
+    alerts: dict[str, list[str]] = {key: [] for key in PRODUCTS}
 
-    targets = {item["url"]: item["name"] for item in known}
+    def add_alert(product: str, text: str) -> None:
+        alerts.setdefault(product, []).append(text)
+
+    targets: dict[str, tuple[str, str]] = {
+        item["url"]: (item["name"], item.get("product", "consola")) for item in known
+    }
     for url, item in state["discovered"].items():
         # Las publicaciones oficiales de Mercado Libre se revisan mediante
         # su descubrimiento dedicado, no mediante scraping directo genérico.
         if item.get("source") == "mercadolibre_official":
             continue
-        targets.setdefault(url, item.get("name") or url)
+        targets.setdefault(url, (item.get("name") or url, item.get("product", "consola")))
 
-    for url, name in targets.items():
-        current = inspect(session, name, url)
-        print(f"{name}: {current.status} http={current.http} precio={current.price_clp}", flush=True)
+    for url, (name, product) in targets.items():
+        current = inspect(session, name, url, product)
+        print(f"[{product}] {name}: {current.status} http={current.http} precio={current.price_clp}", flush=True)
         # Estados no concluyentes o desafíos anti-bot no deben reemplazar
         # el último estado fiable ni generar alertas falsas.
         if current.status in ("error", "unknown"):
@@ -101,12 +110,13 @@ def main() -> int:
         previous = previous_entry.get("snapshot") if previous_entry else None
 
         if initialized and previous and important_change(previous, current):
-            alerts.append(describe(name, previous, current))
+            add_alert(product, describe(name, previous, current))
 
         changed = not previous or important_change(previous, current)
         if changed:
             state["stores"][url] = {
                 "name": name,
+                "product": product,
                 "snapshot": current.snapshot(),
                 "last_changed_at": now(),
             }
@@ -123,13 +133,14 @@ def main() -> int:
         is_new = previous_entry is None
 
         if initialized and is_new:
-            alerts.append(describe(current.name, None, current, new_listing=True))
+            add_alert(current.product, describe(current.name, None, current, new_listing=True))
         elif initialized and previous and important_change(previous, current):
-            alerts.append(describe(current.name, previous, current))
+            add_alert(current.product, describe(current.name, previous, current))
 
         if is_new or important_change(previous or {}, current):
             state["stores"][current.url] = {
                 "name": current.name,
+                "product": current.product,
                 "snapshot": current.snapshot(),
                 "last_changed_at": now(),
             }
@@ -138,6 +149,7 @@ def main() -> int:
             "name": current.name,
             "url": current.url,
             "source": "mercadolibre_official",
+            "product": current.product,
             "found_at": (
                 state["discovered"].get(current.url, {}).get("found_at")
                 or now()
@@ -153,44 +165,51 @@ def main() -> int:
             state["discovered"][current.url] = {
                 "name": current.name,
                 "url": current.url,
+                "product": current.product,
                 "found_at": now(),
             }
             state["stores"][current.url] = {
                 "name": current.name,
+                "product": current.product,
                 "snapshot": current.snapshot(),
                 "last_seen_at": now(),
                 "last_changed_at": now(),
             }
             if initialized:
-                alerts.append(describe(current.name, None, current, new_listing=True))
+                add_alert(current.product, describe(current.name, None, current, new_listing=True))
 
     state["initialized"] = True
-    state["version"] = 2
+    state["version"] = 3
     state_path.parent.mkdir(parents=True, exist_ok=True)
     state_path.write_text(
         json.dumps(state, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
 
-    report_path = Path(args.report)
-    if alerts:
-        report = (
-            "# Switch 2 Zelda 40th — novedades detectadas\n\n"
-            + "\n".join(alerts)
-            + "\n---\n"
-            + f"Revisión UTC: {now()}. Confirma la disponibilidad directamente antes de comprar.\n"
-        )
-    else:
-        report = "Sin cambios relevantes.\n"
-    report_path.write_text(report, encoding="utf-8")
-
+    # Un reporte por producto: report-consola.md, report-control.md
+    report_base = Path(args.report)
     output = os.environ.get("GITHUB_OUTPUT")
-    if output:
-        with open(output, "a", encoding="utf-8") as f:
-            f.write(f"changes={'true' if alerts else 'false'}\n")
-            f.write(f"count={len(alerts)}\n")
+    total = 0
+    for product, items in alerts.items():
+        label_txt = PRODUCTS.get(product, {}).get("label", product)
+        path = report_base.with_name(f"{report_base.stem}-{product}{report_base.suffix}")
+        if items:
+            body = (
+                f"# {label_txt} — novedades detectadas\n\n"
+                + "\n".join(items)
+                + "\n---\n"
+                + f"Revisión UTC: {now()}. Confirma la disponibilidad directamente antes de comprar.\n"
+            )
+        else:
+            body = "Sin cambios relevantes.\n"
+        path.write_text(body, encoding="utf-8")
+        total += len(items)
+        if output:
+            with open(output, "a", encoding="utf-8") as f:
+                f.write(f"changes_{product}={'true' if items else 'false'}\n")
+                f.write(f"count_{product}={len(items)}\n")
 
-    print(f"Monitor completado. Alertas: {len(alerts)}")
+    print(f"Monitor completado. Alertas: {total} " + str({k: len(v) for k, v in alerts.items()}))
     return 0
 
 if __name__ == "__main__":
