@@ -12,6 +12,17 @@
         "title": null
       }
     },
+    "https://kaiojuegos.cl/accesorios/2649-pro-controller-stand-the-legend-of-zelda-40th-aniversario-switch-2.html": {
+      "last_changed_at": "2026-11-12T22:05:43+00:00",
+      "name": "Kaio Juegos",
+      "product": "control",
+      "snapshot": {
+        "http": 200,
+        "price_clp": 149990,
+        "status": "unavailable",
+        "title": "Pro Controller + Stand: The Legend of Zelda 40th Aniversario - Switch 2"
+      }
+    },
     "https://playservice.cl/producto/preventa-consola-nintendo-switch-2-the-legend-of-zelda-40th-anniversary/": {
       "last_changed_at": "2026-09-21T22:22:13+00:00",
       "name": "Play Service",
@@ -20,6 +31,17 @@
         "price_clp": 689990,
         "status": "unavailable",
         "title": "Preventa Consola Nintendo Switch 2 – The Legend of Zelda 40th Anniversary – Play Service Talca – Videojuegos y consolas"
+      }
+    },
+    "https://www.mathogames.cl/accesorios-switch-2/2565-pro-controller-nintendo-switch-2-stand-the-legend-of-zelda-40th-anniversary.html": {
+      "last_changed_at": "2026-11-12T22:05:46+00:00",
+      "name": "Mathogames",
+      "product": "control",
+      "snapshot": {
+        "http": 404,
+        "price_clp": null,
+        "status": "page_missing",
+        "title": null
       }
     },
     "https://www.mathogames.cl/consolas-switch-2/2538-consola-nintendo-switch-2-the-legend-of-zelda-40th-anniversary.html": {
@@ -42,26 +64,61 @@
         "title": null
       }
     },
-    "https://www.santogames.cl/nintendo-switch-2-the-legend-of-zelda-40%C2%BA-aniversario": {
-      "last_changed_at": "2026-09-21T22:22:10+00:00",
-      "name": "Santo Games",
+    "https://www.retroworld.cl/nintendo-switch-2-pro-controller-base-de-exhibicion-the-legend-of-zelda-edicion-40-aniversario": {
+      "last_changed_at": "2026-11-12T22:05:44+00:00",
+      "name": "Retroworld",
+      "product": "control",
       "snapshot": {
         "http": 200,
-        "price_clp": null,
+        "price_clp": 169950,
+        "status": "unavailable",
+        "title": "Nintendo Switch 2 Pro Controller + Base de Exhibición The Legend of Zelda Edición 40 Aniversario"
+      }
+    },
+    "https://www.santogames.cl/en/nintendo-switch-2-pro-controller-zelda-40th-display-stand": {
+      "last_changed_at": "2026-11-12T22:05:45+00:00",
+      "name": "Santo Games",
+      "product": "control",
+      "snapshot": {
+        "http": 200,
+        "price_clp": 149990,
+        "status": "unavailable",
+        "title": "Nintendo Switch 2 Pro Controller Zelda 40th + Display Stand"
+      }
+    },
+    "https://www.santogames.cl/nintendo-switch-2-the-legend-of-zelda-40%C2%BA-aniversario": {
+      "last_changed_at": "2026-11-12T22:05:37+00:00",
+      "name": "Santo Games",
+      "product": "consola",
+      "snapshot": {
+        "http": 200,
+        "price_clp": 699990,
         "status": "unavailable",
         "title": "Nintendo Switch 2 – The Legend of Zelda 40.º Aniversario"
       }
     },
     "https://www.todojuegos.cl/Productos/NS2/Consola-Switch-2-Zelda-40th-Aniversario/": {
-      "last_changed_at": "2026-09-21T22:22:16+00:00",
+      "last_changed_at": "2026-11-12T22:05:41+00:00",
       "name": "TodoJuegos",
+      "product": "consola",
       "snapshot": {
         "http": 200,
-        "price_clp": null,
+        "price_clp": 669900,
         "status": "unavailable",
-        "title": "Consola Switch 2 Zelda 40th Aniversario - Consolas para NS2 -  Nintendo Switch 2 (Chile)"
+        "title": "Consola Switch 2 Zelda 40th Aniversario [Consola Switch 2]"
+      }
+    },
+    "https://www.todojuegos.cl/Productos/NS2/Pro-Controller-Switch-2-Stand-Edicion-Zelda-40th-Aniversario/": {
+      "last_changed_at": "2026-11-12T22:05:45+00:00",
+      "name": "TodoJuegos",
+      "product": "control",
+      "snapshot": {
+        "http": 200,
+        "price_clp": 147900,
+        "status": "unavailable",
+        "title": "Pro Controller Switch 2 + Stand Edicion Zelda 40th Aniversario [Accesorio Switch 2]"
       }
     }
   },
-  "version": 2
+  "version": 3
 }
