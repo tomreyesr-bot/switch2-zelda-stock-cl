@@ -1,4 +1,4 @@
-name: Revisar stock Switch 2 Zelda 40th
+name: Revisar stock Switch 2 Zelda 40th (consola + control)
 
 run-name: ${{ github.event_name == 'workflow_dispatch' && '🧪 MANUAL · revisión solicitada' || '🔧 CÓDIGO · validación del monitor' }}
 
@@ -105,21 +105,26 @@ jobs:
           git pull --rebase origin main
           git push origin HEAD:main
 
-      - name: Avisar mediante GitHub Issue
-        if: steps.check.outputs.changes == 'true'
+      - name: Aviso CONSOLA (GitHub Issue)
+        if: steps.check.outputs.changes_consola == 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          COUNT='${{ steps.check.outputs.count }}'
-          TITLE="🚨 Switch 2 Zelda 40th: ${COUNT} cambio(s) detectado(s)"
-          gh issue create \
-            --repo "$GITHUB_REPOSITORY" \
-            --title "$TITLE" \
-            --body-file report.md \
-            --assignee "$GITHUB_REPOSITORY_OWNER" \
-          || gh issue create \
-            --repo "$GITHUB_REPOSITORY" \
-            --title "$TITLE" \
-            --body-file report.md
+          TITLE="🎮 CONSOLA Switch 2 Zelda 40th: ${{ steps.check.outputs.count_consola }} cambio(s)"
+          gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" \
+            --body-file report-consola.md --assignee "$GITHUB_REPOSITORY_OWNER" \
+          || gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" --body-file report-consola.md
+
+      - name: Aviso CONTROL con base (GitHub Issue)
+        if: steps.check.outputs.changes_control == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TITLE="🕹️ CONTROL Pro + base Zelda 40th: ${{ steps.check.outputs.count_control }} cambio(s)"
+          gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" \
+            --body-file report-control.md --assignee "$GITHUB_REPOSITORY_OWNER" \
+          || gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" --body-file report-control.md
