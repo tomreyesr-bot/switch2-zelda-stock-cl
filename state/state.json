@@ -64,6 +64,17 @@
         "title": null
       }
     },
+    "https://www.mercadolibre.cl/p/MLC79375219": {
+      "last_changed_at": "2026-11-14T02:17:01+00:00",
+      "name": "Mercado Libre (catálogo)",
+      "product": "consola",
+      "snapshot": {
+        "http": 200,
+        "price_clp": 468230,
+        "status": "unavailable",
+        "title": "Nintendo Switch 2 –The Legend of Zelda – 40th Anniversary Edition"
+      }
+    },
     "https://www.retroworld.cl/nintendo-switch-2-pro-controller-base-de-exhibicion-the-legend-of-zelda-edicion-40-aniversario": {
       "last_changed_at": "2026-11-12T22:05:44+00:00",
       "name": "Retroworld",
