@@ -98,14 +98,14 @@
       }
     },
     "https://www.santogames.cl/nintendo-switch-2-the-legend-of-zelda-40%C2%BA-aniversario": {
-      "last_changed_at": "2026-11-12T22:05:37+00:00",
+      "last_changed_at": "2026-11-18T21:33:59+00:00",
       "name": "Santo Games",
       "product": "consola",
       "snapshot": {
         "http": 200,
         "price_clp": 699990,
-        "status": "unavailable",
-        "title": "Nintendo Switch 2 – The Legend of Zelda 40.º Aniversario"
+        "status": "available",
+        "title": "(RESERVA) Nintendo Switch 2 – The Legend of Zelda 40.º Aniversario"
       }
     },
     "https://www.todojuegos.cl/Productos/NS2/Consola-Switch-2-Zelda-40th-Aniversario/": {
