@@ -98,13 +98,13 @@
       }
     },
     "https://www.santogames.cl/nintendo-switch-2-the-legend-of-zelda-40%C2%BA-aniversario": {
-      "last_changed_at": "2026-11-18T21:33:59+00:00",
+      "last_changed_at": "2026-11-20T13:58:20+00:00",
       "name": "Santo Games",
       "product": "consola",
       "snapshot": {
         "http": 200,
         "price_clp": 699990,
-        "status": "available",
+        "status": "unavailable",
         "title": "(RESERVA) Nintendo Switch 2 – The Legend of Zelda 40.º Aniversario"
       }
     },
